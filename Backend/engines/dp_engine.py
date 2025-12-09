@@ -44,13 +44,18 @@
 #     }
 
 # backend/engines/dp_engine.py
+
+
 from typing import List, Dict, Any
+import ast
+
+# ------------------------------
+# 1) DP SIMULATION (LIS EXAMPLE)
+# ------------------------------
 
 def simulate_lis_dp(arr: List[int]) -> Dict[str, Any]:
     """
     Simulate the classic O(n^2) LIS DP.
-    Returns final dp array and a list of snapshots showing dp updates.
-    Each snapshot is { "i": i, "j": j, "old": old_value, "new": new_value, "dp": dp_copy, "reason": str }
     """
     n = len(arr)
     if n == 0:
@@ -66,14 +71,88 @@ def simulate_lis_dp(arr: List[int]) -> Dict[str, Any]:
                 candidate = dp[j] + 1
                 if candidate > dp[i]:
                     dp[i] = candidate
-                    # record snapshot
                     snapshots.append({
                         "i": i,
                         "j": j,
                         "old": old_value,
                         "new": dp[i],
-                        "dp": dp[:],  # shallow copy for snapshot
+                        "dp": dp[:],
                         "reason": f"arr[{j}] < arr[{i}] ({arr[j]} < {arr[i]}) => dp[{i}] = dp[{j}] + 1"
                     })
     return {"final_dp": dp, "snapshots": snapshots}
 
+
+
+# -------------------------------------
+# 2) DP STATIC ANALYZER (TOP DOWN / BOTTOM UP)
+# -------------------------------------
+
+class DPAnalyzer(ast.NodeVisitor):
+    def __init__(self):
+        self.dp_updates = []
+        self.memo_calls = []
+        self.memo_sets = []
+        self.detected = None
+
+    def visit_Subscript(self, node):
+        try:
+            name = node.value.id
+            index = ast.unparse(node.slice)
+        except:
+            return
+
+        if name == "dp":
+            self.dp_updates.append({"index": index, "line": node.lineno})
+
+        if name in ("memo", "cache"):
+            self.memo_calls.append({"index": index, "line": node.lineno})
+
+    def visit_Assign(self, node):
+        if isinstance(node.targets[0], ast.Subscript):
+            try:
+                name = node.targets[0].value.id
+                index = ast.unparse(node.targets[0].slice)
+            except:
+                return
+
+            if name == "dp":
+                self.detected = "bottom_up"
+                self.dp_updates.append({
+                    "index": index,
+                    "value": ast.unparse(node.value),
+                    "line": node.lineno
+                })
+
+            if name in ("memo", "cache"):
+                self.detected = "top_down"
+                self.memo_sets.append({
+                    "index": index,
+                    "value": ast.unparse(node.value),
+                    "line": node.lineno
+                })
+
+        self.generic_visit(node)
+
+
+def analyze_dp(code: str):
+    tree = ast.parse(code)
+    analyzer = DPAnalyzer()
+    analyzer.visit(tree)
+
+    if analyzer.detected == "bottom_up":
+        return {
+            "type": "dp_bottom_up",
+            "dp_updates": analyzer.dp_updates
+        }
+
+    if analyzer.detected == "top_down":
+        return {
+            "type": "dp_top_down",
+            "memo_calls": analyzer.memo_calls,
+            "memo_sets": analyzer.memo_sets
+        }
+
+    return {
+        "type": "none",
+        "message": "No DP pattern detected."
+    }
