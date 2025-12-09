@@ -1,17 +1,16 @@
-def basic_debug(code: str):
+def analyze_code_for_issues(code: str):
     issues = []
 
-    if "return n *" in code and "n == 0" not in code:
-        issues.append({
-            "issue": "Missing base case for n == 0",
-            "severity": "high",
-            "suggestion": "Add: if n == 0: return 1"
-        })
+    if "return" in code and "if" not in code and "for" not in code:
+        issues.append("Suspicious return statement without flow control.")
 
-    if "arr[i+1]" in code and "len(arr)-1" not in code:
-        issues.append({
-            "issue": "Possible out-of-bounds array access",
-            "severity": "medium"
-        })
+    if "arr[" in code and "len(" not in code:
+        issues.append("Possible array index out of range.")
 
-    return {"bugs": issues}
+    if "while" in code and "break" not in code:
+        issues.append("Possible infinite loop: while loop without break.")
+
+    if "fact(" in code and "n == 0" not in code:
+        issues.append("Recursion missing base case (n == 0).")
+
+    return issues
