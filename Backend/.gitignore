@@ -1,0 +1,79 @@
+# =============================================
+# PYTHON BUILD/COMPILE ARTIFACTS
+# =============================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.pkl
+*.log
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# =============================================
+# EDITOR / IDE FILES
+# =============================================
+.vscode/
+.idea/
+*.swp
+
+# =============================================
+# OS FILES
+# =============================================
+.DS_Store
+Thumbs.db
+
+# =============================================
+# FASTAPI / UVICORN / TEMP FILES
+# =============================================
+*.sqlite3
+*.db
+*.db-journal
+*.pid
+*.sock
+
+# Temporary sandbox files
+/tmp/
+sandbox/
+sandbox_temp/
+
+# =============================================
+# GOOGLE GEMINI API KEY
+# DO NOT COMMIT ANY .env or key files
+# =============================================
+.env
+.env.*
+google_api_key.txt
+GOOGLE_API_KEY
+*.secret
+*.key
+key.txt
+secret.txt
+
+# =============================================
+# NODE / FRONTEND (if any future frontend added)
+# =============================================
+node_modules/
+dist/
+build/
+
+# =============================================
+# LOGS
+# =============================================
+logs/
+*.log
+uvicorn.log
+
+# =============================================
+# PYTHON PACKAGE FILES
+# =============================================
+*.egg-info/
+*.egg
+.eggs/
+pip-wheel-metadata/

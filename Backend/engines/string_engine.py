@@ -41,6 +41,14 @@ def simulate_string_operations(code: str, s: str) -> Dict[str, Any]:
         "boundary_issues": issues
     }
 
+def analyze_string_code(code: str, sample_string: str = "abcdefghij") -> Dict[str, Any]:
+    """
+    Wrapper for /process endpoint.
+    If frontend does not provide an actual string,
+    we use a default test string of length 10.
+    """
+    return simulate_string_operations(code, sample_string)
+
 # This handles:
 
 # ✔ s[i]

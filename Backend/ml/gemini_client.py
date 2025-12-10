@@ -33,4 +33,4 @@ def call_gemini(prompt: str, json_mode: bool = False):
     except Exception as e:
         return f"Gemini error: {e}"
     
-# print("API key",API_KEY)
+

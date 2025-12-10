@@ -75,6 +75,18 @@ def simulate_array_operations(code: str, input_array: List[int]) -> Dict[str, An
         "dict_vars": dict_vars
     }
 
+def analyze_array_code(code: str, sample_input: List[int] = None) -> Dict[str, Any]:
+    """
+    Wrapper for /process endpoint.
+    If frontend does not provide actual array input,
+    we simulate with a placeholder array of size 10.
+    """
+    if sample_input is None:
+        sample_input = list(range(10))
+
+    return simulate_array_operations(code, sample_input)
+
+
 
 # This engine:
 

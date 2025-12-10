@@ -41,15 +41,16 @@ def _detect_dp(code: str) -> Tuple[bool, str]:
       - memoization patterns (cache decorator, memo, dictionary storing)
     """
     if re.search(r"\bdp\b", code):
-        return True, "Found variable named 'dp'"
+        return True, "Found dp[] usage"
     if "memo" in code or "cache" in code or "lru_cache" in code:
-        return True, "Found memoization keyword (memo/cache/lru_cache)"
-    # nested loops heuristic
-    loops = len(re.findall(r"\bfor\b", code))
-    if loops >= 2 and ("range(" in code or "len(" in code):
-        return True, "Multiple loops + range/len heuristic suggests DP"
-    return False, "No dp variable or memoization found"
+        return True, "Memoization keywords detected"
 
+    # nested loop DP heuristic (safer)
+    loop_pairs = re.findall(r"for .* in range", code)
+    if len(loop_pairs) >= 2 and "dp" in code:
+        return True, "Nested loops + dp[] suggests DP"
+
+    return False, "No dp or memoization found"
 
 def _detect_graph(code: str) -> Tuple[bool, str]:
     """
@@ -68,28 +69,56 @@ def _detect_graph(code: str) -> Tuple[bool, str]:
 
 def _detect_array_string(code: str) -> Tuple[bool, str]:
     """
-    Detect array / string focused code:
-      - indexing with [] and typical array names arr, nums, a
-      - string-specific keywords: substring, substr, split, join
+    Detect array or string code.
     """
-    if re.search(r"\b(arr|nums|a|array|list|vector)\b", code):
-        if re.search(r"\[[^\]]+\]", code):
-            return True, "Indexing and array variable names detected"
+
+    # detect string literal indexing: s = "hello"; s[3]
+    string_assignment = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(['\"].*?['\"])", code)
+    indexing = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\s*\[[^\]]+\]", code)
+
+    if string_assignment and indexing:
+        var1 = string_assignment.group(1)
+        var2 = indexing.group(1)
+        if var1 == var2:
+            return True, "String indexing detected"
+
+    # detect general string methods
     string_kw = ["split(", "join(", "substring", "str(", ".upper(", ".lower(", "replace("]
-    if _contains_patterns(code, string_kw):
+    if any(k in code for k in string_kw):
         return True, "String manipulation keywords detected"
+
+    # detect array variables
+    if re.search(r"\b(arr|nums|array|list|vector)\b", code) and indexing:
+        return True, "Indexing and array variable names detected"
+
+    # generic indexing → default as array
+    if indexing:
+        return True, "Indexing detected"
+
     return False, "No array/string patterns found"
+
 
 
 def _detect_pointer(code: str) -> Tuple[bool, str]:
     """
-    Detect C/C++ pointer style code heuristics:
-      - presence of '*' or '->' and includes like std::vector or malloc/free
+    Detect real C/C++ pointer patterns, NOT Python's '*'.
+    We detect:
+      - '->'
+      - malloc(), free()
+      - int* p; or char* s;  (but NOT python math)
     """
-    cpp_indicators = ["->", "*", "malloc(", "free(", "new ", "delete "]
-    if any(ind in code for ind in cpp_indicators):
-        return True, "C/C++ pointer or memory-manipulation tokens detected"
-    return False, "No pointer-style patterns found"
+    # definitely C/C++
+    if "->" in code or "malloc(" in code or "free(" in code:
+        return True, "Found C/C++ memory-operation (->, malloc, free)"
+
+    # detect C-style declarations ONLY if '*' is next to a type keyword
+    type_keywords = ["int", "char", "float", "double", "long"]
+    for t in type_keywords:
+        if re.search(rf"\b{t}\s*\*", code):
+            return True, f"Detected C-style pointer declaration ({t}*)"
+
+    return False, "No pointer patterns"
+
 
 
 def classify_code(code: str, use_ml_fallback: bool = False) -> Dict:
@@ -136,7 +165,8 @@ def classify_code(code: str, use_ml_fallback: bool = False) -> Dict:
         confidence = float(score[topic])
         # map internal 'array_string' to 'array' or 'string' based on keywords
         if topic == "array_string":
-            if any(k in code for k in ["split(", "join(", "substring", ".upper(", ".lower("]):
+    # If string literal present anywhere, classify as string
+            if "'" in code or '"' in code:
                 topic = "string"
             else:
                 topic = "array"
