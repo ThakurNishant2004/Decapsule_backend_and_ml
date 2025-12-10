@@ -11,7 +11,6 @@ genai.configure(api_key=API_KEY)
 
 MODEL = "models/gemini-2.5-flash"   # ✔ correct model path
 
-
 # print([m.name for m in genai.list_models()])
 
 def call_gemini(prompt: str, json_mode: bool = False):
@@ -33,4 +32,3 @@ def call_gemini(prompt: str, json_mode: bool = False):
     except Exception as e:
         return f"Gemini error: {e}"
     
-
