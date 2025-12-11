@@ -37,11 +37,12 @@ Thumbs.db
 *.db-journal
 *.pid
 *.sock
+uvicorn.log
 
 # Temporary sandbox files
-/tmp/
-sandbox/
 sandbox_temp/
+tmp/
+temp/
 
 # =============================================
 # GOOGLE GEMINI API KEY
@@ -68,7 +69,6 @@ build/
 # =============================================
 logs/
 *.log
-uvicorn.log
 
 # =============================================
 # PYTHON PACKAGE FILES
