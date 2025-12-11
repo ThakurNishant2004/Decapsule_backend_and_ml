@@ -12,6 +12,9 @@ from routes.explain import router as explain_router
 from routes.fix import router as fix_router
 from routes.dp import router as dp_router
 from routes.process import router as process_router
+from routes.process_stream import router as process_stream_router
+
+
 
 app = FastAPI(title="DECAPSULE Backend", description="AI Debugger Backend")
 
@@ -30,6 +33,8 @@ app.include_router(explain_router, prefix="/explain")
 app.include_router(fix_router, prefix="/fix")
 app.include_router(dp_router, prefix="/dp")
 app.include_router(process_router, prefix="/process")
+app.include_router(process_stream_router, prefix="/process_stream")
+
 
 @app.get("/")
 def root():

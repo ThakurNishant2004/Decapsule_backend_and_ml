@@ -9,9 +9,10 @@ load_dotenv()
 API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=API_KEY)
 
-MODEL = "models/gemini-2.5-flash"   # ✔ correct model path
+MODEL = "models/gemini-flash-lite-latest"   # ✔ correct model path
 
 # print([m.name for m in genai.list_models()])
+print(MODEL)
 
 def call_gemini(prompt: str, json_mode: bool = False):
     try:
