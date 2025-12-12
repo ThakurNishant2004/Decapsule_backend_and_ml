@@ -50,8 +50,8 @@ temp/
 # =============================================
 .env
 .env.*
-google_api_key.txt
-GOOGLE_API_KEY
+groq_api_key.txt
+GROQ_API_KEY
 *.secret
 *.key
 key.txt
