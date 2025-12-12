@@ -148,17 +148,17 @@ async def process_stream(req: StreamRequest, request: Request):
             if await request.is_disconnected():
                 return
 
-            # ---------- STAGE 6: attempt auto-fix (LLM) ----------
-            yield sse_event({"stage": "fix_start", "payload": {}})
-            try:
-                fix_prompt = f"Fix this code without changing its logic unless necessary:\n\n{code}"
-                fix_text = call_gemini(fix_prompt)
-                yield sse_event({"stage": "fix", "payload": fix_text})
-            except Exception as e:
-                yield sse_event({"stage": "fix_error", "payload": {"error": str(e)}})
+            # # ---------- STAGE 6: attempt auto-fix (LLM) ----------
+            # yield sse_event({"stage": "fix_start", "payload": {}})
+            # try:
+            #     fix_prompt = f"Fix this code without changing its logic unless necessary:\n\n{code}"
+            #     fix_text = call_gemini(fix_prompt)
+            #     yield sse_event({"stage": "fix", "payload": fix_text})
+            # except Exception as e:
+            #     yield sse_event({"stage": "fix_error", "payload": {"error": str(e)}})
 
-            if await request.is_disconnected():
-                return
+            # if await request.is_disconnected():
+            #     return
 
             # ---------- STAGE 7: teacher explanation (LLM) ----------
             yield sse_event({"stage": "explain_start", "payload": {}})
@@ -171,7 +171,7 @@ async def process_stream(req: StreamRequest, request: Request):
                     "recursion_tree": recursion_tree,
                     "dp": dp_out,
                     "issues": issues,
-                    "fix": fix_text if 'fix_text' in locals() else None
+                    # "fix": fix_text if 'fix_text' in locals() else None
                 })
                 explanation = call_gemini(explain_prompt)
                 yield sse_event({"stage": "explanation", "payload": explanation})
@@ -187,7 +187,7 @@ async def process_stream(req: StreamRequest, request: Request):
                 "recursion_tree": recursion_tree,
                 "dp": dp_out,
                 "issues": issues,
-                "fix": fix_text if 'fix_text' in locals() else None,
+                # "fix": fix_text if 'fix_text' in locals() else None,
                 "explanation": explanation if 'explanation' in locals() else None
             }
             yield sse_event({"stage": "done", "payload": final})
