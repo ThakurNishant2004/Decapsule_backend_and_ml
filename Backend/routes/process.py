@@ -14,7 +14,8 @@ from engines.string_engine import analyze_string_code
 from sandbox.sandbox_runner import run_in_sandbox
 
 # LLM
-from ml.gemini_client import call_gemini
+# from ml.gemini_client import call_gemini
+from ml.groq_client import call_groq as call_llm
 from ml.explain_prompt import make_explain_prompt
 
 
@@ -116,13 +117,13 @@ Fix this code without changing its logic unless necessary:
 
 {code}
 """
-    final["fix"] = call_gemini(fix_prompt)
+    final["fix"] = call_llm(fix_prompt)
 
     # ----------------------------------------------------
     # 7) TEACHER EXPLANATION (Gemini)
     # ----------------------------------------------------
     explain_prompt = make_explain_prompt(code, final)
-    final["explanation"] = call_gemini(explain_prompt)
+    final["explanation"] = call_llm(explain_prompt)
 
     return {
         "ok": True,

@@ -21,7 +21,8 @@ from engines.string_engine import analyze_string_code
 from sandbox.sandbox_runner import run_in_sandbox
 
 # LLM (existing synchronous call)
-from ml.gemini_client import call_gemini
+# from ml.gemini_client import call_gemini
+from ml.groq_client import call_groq as call_llm
 from ml.explain_prompt import make_explain_prompt
 
 router = APIRouter()
@@ -173,7 +174,7 @@ async def process_stream(req: StreamRequest, request: Request):
                     "issues": issues,
                     # "fix": fix_text if 'fix_text' in locals() else None
                 })
-                explanation = call_gemini(explain_prompt)
+                explanation = call_llm(explain_prompt)
                 yield sse_event({"stage": "explanation", "payload": explanation})
             except Exception as e:
                 yield sse_event({"stage": "explain_error", "payload": {"error": str(e)}})
