@@ -17,7 +17,7 @@ from engines.debugger import debug_code_static
 from engines.array_engine import analyze_array_code
 from engines.string_engine import analyze_string_code
 from engines.dp_runtime_tracer import trace_dp_runtime
-
+from engines.graph_runtime_tracer import trace_graph_runtime
 # Sandbox
 from sandbox.sandbox_runner import run_in_sandbox
 
@@ -92,10 +92,16 @@ async def process_stream(req: StreamRequest, request: Request):
                 yield sse_event({"stage": "analysis", "payload": analysis})
             # ---------- GRAPH ANALYSIS (optional) ----------
             elif topic == "graph":
-                yield sse_event({
-                "stage": "graph_detected",
-                "payload": {"reason": "graph-related patterns found but no graph engine implemented"}
-            })
+                yield sse_event({"stage": "graph_start", "payload": {}})
+
+                graph_events = trace_graph_runtime(code)
+
+                for step in graph_events:
+                    yield sse_event({
+                        "stage": "graph_step",
+                        "payload": step
+                    })
+
             else:
                 # for unknown topics we still tell the client
                 yield sse_event({"stage": "runtime_skipped", "payload": {"reason": "topic not runtime-type"}})
