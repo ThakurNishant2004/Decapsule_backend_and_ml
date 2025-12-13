@@ -49,6 +49,45 @@ def sse_event(data: dict, event: str = "message") -> str:
         payload = json.dumps({"error": "Non-serializable payload blocked"})
     return f"event: {event}\ndata: {payload}\n\n"
 
+def extract_top_level_call_args(code: str, func_name: str):
+    """
+    Extract args ONLY from top-level calls like:
+    fib(10)
+    bfs(graph, 1)
+
+    Ignore:
+    - def fib(...)
+    - return fib(...)
+    - fib(...) inside other expressions
+    """
+    for line in code.splitlines():
+        raw = line
+        line = line.strip()
+
+        # must start at column 0 (top-level)
+        if raw.startswith(" ") or raw.startswith("\t"):
+            continue
+
+        if line.startswith("def "):
+            continue
+
+        if line.startswith("#"):
+            continue
+
+        if line.startswith(f"{func_name}(") and line.endswith(")"):
+            inside = line[len(func_name) + 1 : -1]
+            try:
+                return [
+                    int(x.strip())
+                    for x in inside.split(",")
+                    if x.strip().isdigit()
+                ]
+            except Exception:
+                return []
+
+    return []
+
+
 
 async def run_stage_short_delay():
     # tiny delay so UI can subscribe reliably before first yield
@@ -120,7 +159,15 @@ async def process_stream(req: StreamRequest, request: Request):
                         entry_func = line.split("(")[0].replace("def", "").strip()
                         break
 
-                trace = trace_recursion_runtime(code, entry_func, [4])
+                # -------- Extract recursion call arguments --------
+
+                rec_args = extract_top_level_call_args(code, entry_func)
+
+                # fallback ONLY if user never called the function
+                if not rec_args:
+                    rec_args = [4]
+
+                trace = trace_recursion_runtime(code, entry_func, rec_args)
                 if "data" in trace and "events" in trace["data"]:
                     events = trace["data"]["events"]
                     recursion_tree = build_recursion_tree(events)
