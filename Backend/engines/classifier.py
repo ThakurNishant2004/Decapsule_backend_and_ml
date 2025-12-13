@@ -158,6 +158,10 @@ def classify_code(code: str, use_ml_fallback: bool = False) -> Dict:
         reasons.append(reason)
         score["pointer"] = max(score.get("pointer", 0.0), 0.85)
 
+    # DP overrides recursion if both detected
+    if "dp" in score and "recursion" in score:
+        score["dp"] = 1.1   # force DP to win
+
     # If multiple scores, pick best
     if score:
         # pick the topic with highest score

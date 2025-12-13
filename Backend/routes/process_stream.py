@@ -16,6 +16,7 @@ from engines.dp_engine import analyze_dp, simulate_lis_dp
 from engines.debugger import debug_code_static
 from engines.array_engine import analyze_array_code
 from engines.string_engine import analyze_string_code
+from engines.dp_runtime_tracer import trace_dp_runtime
 
 # Sandbox
 from sandbox.sandbox_runner import run_in_sandbox
@@ -33,12 +34,19 @@ class StreamRequest(BaseModel):
     input: str = ""
 
 
+# def sse_event(data: dict, event: str = "message") -> str:
+#     """
+#     Simple helper to format SSE text/event-stream event
+#     Each event data is JSON-stringified.
+#     """
+#     payload = json.dumps(data, ensure_ascii=False)
+#     return f"event: {event}\ndata: {payload}\n\n"
+
 def sse_event(data: dict, event: str = "message") -> str:
-    """
-    Simple helper to format SSE text/event-stream event
-    Each event data is JSON-stringified.
-    """
-    payload = json.dumps(data, ensure_ascii=False)
+    try:
+        payload = json.dumps(data, ensure_ascii=False)
+    except TypeError:
+        payload = json.dumps({"error": "Non-serializable payload blocked"})
     return f"event: {event}\ndata: {payload}\n\n"
 
 
@@ -118,24 +126,49 @@ async def process_stream(req: StreamRequest, request: Request):
                 return
 
             # ---------- STAGE 4: dp detection + simulation ----------
-            dp_out = {}
+            # ---------- STAGE 4: DP LIVE SIMULATION ----------
+            dp_out = {
+                "steps": [],
+                "final_table": None
+            }
+
             if topic == "dp":
-                dp_info = analyze_dp(code)
-                yield sse_event({"stage": "dp_analysis", "payload": dp_info})
-                # try generic simulate (LIS fallback)
-                # if code has explicit arr variable, try to exec-safe extract arr
-                if "lis" in code.lower():
-                    arr = []
-                    try:
-                        local_vars = {}
-                        exec(code, {}, local_vars)
-                        arr = local_vars.get("arr", [])
-                    except:
-                        arr = []
-                    if isinstance(arr, list):
-                        sim = simulate_lis_dp(arr)
-                        dp_out["simulation"] = sim
-                        yield sse_event({"stage": "dp_simulation", "payload": sim})
+                yield sse_event({"stage": "dp_start", "payload": {}})
+
+                # 1️⃣ Detect entry function
+                entry_func = None
+                for line in code.splitlines():
+                    if line.strip().startswith("def "):
+                        entry_func = line.split("(")[0].replace("def", "").strip()
+                        break
+
+                # 2️⃣ Extract arguments from ORIGINAL code
+                dp_args = []
+                for line in code.splitlines():
+                    if entry_func and f"{entry_func}(" in line:
+                        inside = line.split(f"{entry_func}(")[1].split(")")[0]
+                        try:
+                            dp_args = [int(x.strip()) for x in inside.split(",") if x.strip().isdigit()]
+                        except:
+                            dp_args = []
+                        break
+
+                # 3️⃣ Absolute safety fallback
+                if not dp_args:
+                    dp_args = [10]
+
+                dp_events = trace_dp_runtime(code, entry_func, dp_args)
+
+                for step in dp_events:
+                    dp_out["steps"].append(step)
+
+                    if step["type"] == "dp_update":
+                        dp_out["final_table"] = step["table"]
+
+                    yield sse_event({
+                        "stage": "dp_step",
+                        "payload": step
+                    })
             else:
                 yield sse_event({"stage": "dp_skipped", "payload": {"reason": "topic not dp"}})
 

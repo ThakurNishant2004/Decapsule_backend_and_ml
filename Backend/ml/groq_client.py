@@ -12,7 +12,7 @@ GROQ_KEY = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=GROQ_KEY)
 
 MODEL = "openai/gpt-oss-20b"  # best general-purpose model on Groq
-print(GROQ_KEY)
+# print(GROQ_KEY)
 
 def call_groq(prompt: str, json_mode: bool = False):
     """
