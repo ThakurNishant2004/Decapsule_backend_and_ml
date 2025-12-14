@@ -175,7 +175,7 @@ Streams each stage incrementally via SSE. Perfect for live UI animations.
 
 1.  **Clone the repository**
     ```bash
-    git clone [https://github.com/ThakurNishant2004/Decapsule_backend_and_ml.git](https://github.com/yourusername/decapsule-backend.git)
+    git clone https://github.com/ThakurNishant2004/Decapsule_backend_and_ml.git
     cd decapsule-backend
     ```
 
