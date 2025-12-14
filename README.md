@@ -116,7 +116,7 @@ We support **Server-Sent Events (SSE)** via `/process_stream/stream` to push upd
 
 ---
 
-## 📁 Project Structure
+## Project Structure 📁
 
 ```bash
 Backend/
@@ -146,6 +146,8 @@ Backend/
 │
 ├── .env
 └── requirements.txt
+
+```
 
 ## 🔌 API Endpoints
 
