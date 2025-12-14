@@ -20,6 +20,9 @@ It goes beyond execution by classifying logic, tracing runtime behavior, visuali
 
 This repository contains the **backend engine** powering the Decapsule developer experience.
 
+> **⚠️ Note:**
+=> * ✅ for debug code (don't print) , print() code only in case of run.
+
 ---
 
 ## 🌐 Frontend (UI & Visualization Layer)
@@ -57,9 +60,8 @@ For recursive logic, we trace execution using `sys.settrace` to capture function
 
 
 
-> **⚠️ Important Limitation:**
+> **⚠️ Note:**
 > * ✅ Call stacks & trees are generated for standard recursive patterns.
-> * ❌ Nested closures or complex backtracking may not always produce a perfect tree.
 
 ### 🧮 4. Dynamic Programming Analyzer
 Decapsule includes a DP analysis engine with explicit scope clarity.
@@ -216,7 +218,6 @@ Contributions are welcome! We are actively looking for help with:
 
 - [ ] DFS & Dijkstra graph visualization.
 - [ ] Generic graph execution engines.
-- [ ] Call-stack timeline visualization.
 - [ ] Bottom-Up DP table builders.
 - [ ] Multi-language support (C++, Java, JS).
 
