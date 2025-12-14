@@ -169,6 +169,7 @@ Streams each stage incrementally via SSE. Perfect for live UI animations.
   "code": "def gcd(a, b):\n    if b == 0:\n        return a\n    return gcd(b, a % b)\n\ngcd(48, 18)",
   "input": ""
 }
+```
 
 ## 🔐 Environment Setup
 
