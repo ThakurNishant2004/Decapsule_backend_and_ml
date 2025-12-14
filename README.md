@@ -1,308 +1,226 @@
-## 🚀 Decapsule – AI-Powered Code Debugging & Analysis Engine
-### Smart · Fast · Interactive · Built for Developers
+# 🚀 DECAPSULE (Backend)
+### AI-Powered Code Debugging, Analysis & Visualization Engine
 
-### Decapsule is a full-stack AI debugging engine designed to analyze, visualize, and auto-fix code in real time.
-### It detects errors, executes code safely inside a sandbox, builds recursion trees, simulates dynamic programming tables, and  even generates teacher-level explanations powered by Google Gemini.
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.95+-teal?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.x-blue?style=for-the-badge&logo=python)](https://www.python.org/)
+[![Live Frontend](https://img.shields.io/badge/Live-Frontend-brightgreen?style=for-the-badge&logo=vercel)](https://decapsule-git-main-krish-guptas-projects-5351c1cf.vercel.app/)
+[![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge)](LICENSE)
 
-### This is the backend engine powering the Decapsule developer experience.
+> **Smart · Fast · Transparent · Built for Developers**
 
-### ✨ Core Features
-#### 🔍 1. Code Classification Engine (AST-Based)
+---
 
-#### Automatically detects the type of logic the user wrote:
+## 🧠 What is Decapsule?
 
-#### Recursion
+**Decapsule** is a full-stack AI debugging and code-analysis engine designed to understand *how* code behaves internally, not just whether it works.
 
-#### Dynamic Programming (Top-Down / Bottom-Up)
+It goes beyond execution by classifying logic, tracing runtime behavior, visualizing algorithmic structures, and generating teacher-level explanations — all streamed live to the frontend.
 
-#### Arrays & String logic
 
-#### Pointer-style (C/C++-like) code
 
-#### Graph-like / Unknown algorithmic patterns
+This repository contains the **backend engine** powering the Decapsule developer experience.
 
-### Classification drives the rest of the debugging pipeline.
+---
 
-#### ⚙️ 2. Sandboxed Code Execution
+## 🌐 Frontend (UI & Visualization Layer)
 
-#### User code runs inside a fully isolated environment:
+Decapsule’s frontend is a React (JSX)–based interactive playground that visualizes this backend’s analysis in real-time. It adheres to a philosophy of **honesty and progressive visualization**.
 
-#### Time-limited
+| Repository | Live Demo |
+| :--- | :--- |
+| [**👉 GitHub: Decapsule Frontend**](https://github.com/kKrishGupta/DECAPSULE.git) | [**🚀 Launch Live App**](https://decapsule-git-main-krish-guptas-projects-5351c1cf.vercel.app/) |
 
-#### Memory-safe
+**Frontend developed by:** Krish Gupta
 
-#### No real filesystem access
+---
 
-#### Captures: stdout, stderr, exit codes
+## ✨ Core Capabilities
 
-#### Powered by the project’s custom sandbox_runner.
+### 🔍 1. Code Classification Engine (AST-Based)
+Decapsule first analyzes the code structure to determine the logic type. This decision controls which analysis engines are activated next.
+
+* ✅ **Recursion**
+* ✅ **Dynamic Programming** (Top-Down / Memoized)
+* ✅ **Arrays & Strings**
+* ✅ **Loop-based patterns**
+* ✅ **Graph-like code** (Heuristic)
+
+### ⚙️ 2. Secure Sandboxed Code Execution
+All user code runs inside a strictly isolated environment powered by `sandbox_runner`.
+* ⏱ **Time-limited execution**
+* 🧠 **Memory-safe**
+* 🔒 **No real filesystem/OS access**
+* 📤 **Captures stdout, stderr, exit codes**
 
 ### 🔁 3. Recursion Runtime Tracing
+For recursive logic, we trace execution using `sys.settrace` to capture function calls, arguments, and return values.
 
-#### For recursive functions:
 
-#### Collects full call events
 
-#### Captures arguments at each depth
-
-#### Builds the complete recursion call-tree
-
-#### Generates a structured tree JSON for frontend visualization
+> **⚠️ Important Limitation:**
+> * ✅ Call stacks & trees are generated for standard recursive patterns.
+> * ❌ Nested closures or complex backtracking may not always produce a perfect tree.
 
 ### 🧮 4. Dynamic Programming Analyzer
+Decapsule includes a DP analysis engine with explicit scope clarity.
+
+
+
+* ✅ **Supported:** Top-Down (Memoized) DP, Recursive DP with cache.
+* ❌ **Not Supported:** Bottom-Up DP table construction.
+* **Output:** Detects state variables, extracts transitions, and builds a step-by-step DP evolution for the UI.
+
+### 🗺️ 5. Graph Execution Mapping
+Visualizes how graph algorithms traverse data.
+
+* ✅ **Supported:** BFS-based traversal.
+* ❌ **Not Supported:** DFS, Dijkstra, Weighted graphs.
+* **Output:** Traces queue evolution and visited order.
+
+### 🔧 6. Static Bug & Issue Detection
+Rule-based static analysis detects:
+* Missing recursion base cases.
+* Off-by-one indexing errors.
+* Infinite loops (heuristic).
+* Unused variables & risky patterns.
+
+### 🤖 7. AI-Powered Auto-Fix Engine
+Decapsule integrates **Groq** to provide intelligent corrections.
+* ✅ **Minimal logical fixes**
+* ✅ **Fully corrected code**
+* ✅ **Clear reasoning** & JSON-safe output
+
+### 🧠 8. AI Explanation Engine (Teacher Mode)
+Generates human-friendly explanations covering step-by-step execution, time/space complexity, and intuition.
+
+### 🔥 9. Live Debugging Stream (SSE)
+We support **Server-Sent Events (SSE)** via `/process_stream/stream` to push updates in real-time (Classification -> Runtime -> Visualization -> Explanation).
+
+---
+
+## 🛠️ Tech Stack
+
+### **Backend**
+* **FastAPI**: High-performance web framework.
+* **Python 3.x**: Core logic.
+* **Custom Sandbox**: Secure execution runner.
+* **AST**: Static Analysis.
+
+### **AI / ML**
+* **Groq (openai/gpt-oss-20b)**: For high-speed inference.
+* **Prompt Engineering**: Custom JSON-safe structured prompts.
 
-#### If the code uses DP:
+### **Communication**
+* REST APIs
+* Server-Sent Events (SSE)
 
-#### Detects DP tables (dp[], memoization, nested loops)
+---
+
+## 📁 Project Structure
 
-#### Extracts transitions
+```bash
+Backend/
+│
+├── main.py
+├── routes/
+│   ├── run.py
+│   ├── process.py
+│   └── process_stream.py
+│
+├── engines/
+│   ├── classifier.py
+│   ├── recursion_engine.py
+│   ├── recursion_tree_builder.py
+│   ├── dp_engine.py
+│   ├── debugger.py
+│   ├── array_engine.py
+│   └── ...
+│
+├── ml/
+│   ├── groq_client.py
+│   ├── explain_prompt.py
+│   └── fix_prompt.py
+│
+├── sandbox/
+│   └── sandbox_runner.py
+│
+├── .env
+└── requirements.txt
 
-#### Builds a detailed line-by-line DP timeline
+## 🔌 API Endpoints
 
-#### Special handling for LIS simulation
+### ▶️ Run Code
+**POST** `/run`
+Executes code inside the sandbox and returns raw output.
 
-#### Outputs a DP table ready for UI visualization
+### 🧠 Full Debugging Pipeline
+**POST** `/process`
+Returns a complete JSON object containing classification, runtime data, recursion trees, DP analysis, graph maps, and AI explanations.
 
-### 🔧 5. Static Bug Finder
+### ⚡ Live Debugging Stream
+**POST** `/process_stream/stream`
+Streams each stage incrementally via SSE. Perfect for live UI animations.
 
-#### Decapsule includes a custom static analysis engine that detects:
+**Example Request:**
+```json
+{
+  "code": "def gcd(a, b):\n    if b == 0:\n        return a\n    return gcd(b, a % b)\n\ngcd(48, 18)",
+  "input": ""
+}
 
-#### Missing recursion base cases
+## 🔐 Environment Setup
 
-#### Off-by-one indexing
+1.  **Clone the repository**
+    ```bash
+    git clone [https://github.com/ThakurNishant2004/Decapsule_backend_and_ml.git](https://github.com/yourusername/decapsule-backend.git)
+    cd decapsule-backend
+    ```
 
-#### Unused variables
+2.  **Install dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-#### Infinite loops (heuristic)
+3.  **Create a `.env` file**
+    ```ini
+    GROQ_API_KEY=your_key_here
+    ```
 
-#### Dangerous patterns
+> **⚠️ Security Note:** Ensure `.env` is added to your `.gitignore` file to prevent leaking API keys.
 
-#### DP mistakes
+---
 
-#### More rules can be added anytime
+## 🏆 Why Decapsule is Different
 
-#### Produces structured issue reports for the frontend.
+Decapsule is not just a code runner or a chatbot. It is a **true AI debugging ecosystem**.
 
-### 🤖 6. AI-Powered Auto-Fix (Gemini)
 
-#### The backend sends user code to Gemini with a structured prompt:
 
-#### ✔ Minimal logical modifications
-#### ✔ Complete, corrected version of the code
-#### ✔ Clear justification
-#### ✔ JSON-safe output
+It uniquely combines:
 
-#### If the API rate-limit is hit, the system provides helpful fallback messages.
+* ✅ **Static Analysis** (AST)
+* ✅ **Runtime Tracing** (Sys.settrace)
+* ✅ **Algorithm Visualization** (Trees/Graphs)
+* ✅ **AI Auto-fixing** (LLMs)
+* ✅ **Teacher-style Explanations**
+* ✅ **Real-time Streaming**
 
-### 🧠 7. AI Explanation Engine (Teacher Mode)
+---
 
-#### Generates a beautifully formatted explanation:
+## ❤️ Contributing
 
-#### What the code does
+Contributions are welcome! We are actively looking for help with:
 
-#### Step-by-step reasoning
+- [ ] DFS & Dijkstra graph visualization.
+- [ ] Generic graph execution engines.
+- [ ] Call-stack timeline visualization.
+- [ ] Bottom-Up DP table builders.
+- [ ] Multi-language support (C++, Java, JS).
 
-#### How recursion/DP works internally
+Feel free to **open an issue** or **submit a PR** 🚀
 
-#### Errors & fixes
+---
 
-#### Complexity analysis
+## 📄 License
 
-#### This becomes the “explain like a teacher” feature.
-
-### 🔥 8. Live Debugging Stream (SSE)
-
-#### Decapsule supports Server-Sent Events for real-time UI updates.
-
-#### The endpoint /process_stream/stream streams:
-
-#### Classification
-
-#### Runtime
-
-#### Recursion tree events
-
-#### DP simulation
-
-#### Issues
-
-#### Auto-fix
-
-#### Explanation
-
-#### Final JSON summary
-
-#### Perfect for frontend animations & live dashboards.
-
-### 🛠️ Tech Stack
-#### Backend
-
-#### FastAPI
-
-#### Python 3.x
-
-#### Custom sandbox
-
-#### AST-based static analysis
-
-#### Recursion tracing framework
-
-#### AI / ML
-
-#### Google Gemini 2.0 / 2.5 Flash / Lite
-
-### Custom prompts
-
-#### JSON-safe AI output
-
-#### Communication
-
-#### REST (JSON)
-
-#### SSE (Live debugging stream)
-
-### 📁 Project Structure
-#### Backend/
-#### │
-#### ├── main.py
-#### ├── routes/
-#### │   ├── run.py
-#### │   ├── process.py
-#### │   └── process_stream.py
-#### │
-#### ├── engines/
-#### │   ├── classifier.py
-#### │   ├── recursion_engine.py
-#### │   ├── recursion_tree_builder.py
-#### │   ├── dp_engine.py
-#### │   ├── debugger.py
-#### │   ├── array_engine.py
-#### │   ├── string_engine.py
-#### │   └── ...
-#### │
-#### ├── ml/
-#### │   ├── gemini_client.py
-#### │   ├── explain_prompt.py
-#### │
-#### ├── sandbox/
-#### │   └── sandbox_runner.py
-#### │
-#### ├── .env
-#### └── requirements.txt
-
-### 🔌 API Endpoints
-### ▶️ 1. Run Code
-### POST /run
-
-
-### Executes code inside sandbox.
-
-### 🧠 2. Full Debugging Pipeline
-### POST /process
-
-
-### Returns full JSON including:
-
-### classification
-
-### runtime
-
-### dp
-
-### recursion tree
-
-### issues
-
-### fix
-
-### explanation
-
-### ⚡ 3. Live Debugging Stream (SSE)
-### POST /process_stream/stream
-
-
-### Streams results stage-by-stage.
-
-### 🚀 Example Request
-### {
-###   "code": "def fact(n): return 1 if n==0 else n*fact(n-1)",
-###   "input": ""
-### }
-
-
-### Response (SSE):
-
-### event: message
-### data: {"stage": "classification", ...}
-
-### event: message
-### data: {"stage": "recursion_start", ...}
-
-### event: message
-### data: {"stage": "recursion", "payload": {...}}
-
-### event: message
-### data: {"stage": "fix", ...}
-
-### event: message
-### data: {"stage": "done", ...}
-
-### 🔐 Environment Setup
-
-### Create .env:
-
-### GOOGLE_API_KEY=your_key_here
-
-
-### (Ensure .env is ignored via .gitignore to avoid accidental leaks.)
-
-## 🔥 Why Decapsule is Unique
-
-### Unlike typical code runners or AI assistants, Decapsule combines:
-
-### ✅ Static analysis
-### ✅ Dynamic runtime tracing
-### ✅ Algorithmic visualization
-### ✅ Auto-fixing
-### ✅ Teacher explanations
-### ✅ Real-time streaming
-
-### This makes Decapsule a complete AI debugging ecosystem, not just a chatbot.
-
-## 🏆 Ideal Use Cases
-
-### Competitive programming learners
-
-### Algorithm visualization
-
-### AI-assisted debugging
-
-### Teaching recursion & DP
-
-### Large codebase analysis
-
-### Hackathons
-
-### Code editors & IDE extensions
-
-## ❤️ Contribute
-
-### Want to add:
-
-### Graph algorithms visualization
-
-### Call stack timeline
-
-### Memory profiler
-
-### More bug rules
-
-### Linting engine
-
-### Multi-language support (C++, JS, Java)
-
-### Feel free to open a PR!
-
-### 📄 License
-
-### MIT License — free to use & extend.
+**MIT License** — Free to use, modify, and extend.
