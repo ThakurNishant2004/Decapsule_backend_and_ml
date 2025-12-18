@@ -43,7 +43,7 @@ Decapsule’s frontend is a React (JSX)–based interactive playground that visu
 Decapsule first analyzes the code structure to determine the logic type. This decision controls which analysis engines are activated next.
 
 * ✅ **Recursion**
-* ✅ **Dynamic Programming** (Top-Down / Memoized)
+* ✅ **Dynamic Programming** (Top-Down / Memoized / Bottom-Up)
 * ✅ **Arrays & Strings**
 * ✅ **Loop-based patterns**
 * ✅ **Graph-like code** (Heuristic)
@@ -68,15 +68,14 @@ Decapsule includes a DP analysis engine with explicit scope clarity.
 
 
 
-* ✅ **Supported:** Top-Down (Memoized) DP, Recursive DP with cache.
-* ❌ **Not Supported:** Bottom-Up DP table construction.
+* ✅ **Supported:** Top-Down (Memoized) DP, Recursive DP with cache , Bottom-Up DP table construction.
 * **Output:** Detects state variables, extracts transitions, and builds a step-by-step DP evolution for the UI.
 
 ### 🗺️ 5. Graph Execution Mapping
 Visualizes how graph algorithms traverse data.
 
-* ✅ **Supported:** BFS-based traversal.
-* ❌ **Not Supported:** DFS, Dijkstra, Weighted graphs.
+* ✅ **Supported:** BFS-based traversal , DFS-based traversal.
+* ❌ **Not Supported:** Dijkstra, Weighted graphs.
 * **Output:** Traces queue evolution and visited order.
 
 ### 🔧 6. Static Bug & Issue Detection
@@ -216,9 +215,8 @@ It uniquely combines:
 
 Contributions are welcome! We are actively looking for help with:
 
-- [ ] DFS & Dijkstra graph visualization.
+- [ ] Dijkstra graph visualization.
 - [ ] Generic graph execution engines.
-- [ ] Bottom-Up DP table builders.
 - [ ] Multi-language support (C++, Java, JS).
 
 Feel free to **open an issue** or **submit a PR** 🚀
