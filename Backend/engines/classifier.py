@@ -40,17 +40,27 @@ def _detect_dp(code: str) -> Tuple[bool, str]:
       - nested loops often (for i in range... for j in range...)
       - memoization patterns (cache decorator, memo, dictionary storing)
     """
-    if re.search(r"\bdp\b", code):
-        return True, "Found dp[] usage"
     if "memo" in code or "cache" in code or "lru_cache" in code:
-        return True, "Memoization keywords detected"
+        return "dp_topdown", "Top-down DP (memoization) detected"
 
-    # nested loop DP heuristic (safer)
-    loop_pairs = re.findall(r"for .* in range", code)
-    if len(loop_pairs) >= 2 and "dp" in code:
-        return True, "Nested loops + dp[] suggests DP"
+    if (
+        re.search(r"\bdp\s*=", code) and
+        re.search(r"for\s+.*in\s+range", code) and
+        not _detect_recursion(code)[0]
+    ):
+        return "dp_bottomup", "Bottom-up DP table filling detected"
 
-    return False, "No dp or memoization found"
+    if re.search(r"\bdp\b", code):
+        return "dp", "DP table usage detected"
+
+    return None, "No DP detected"
+
+    # # nested loop DP heuristic (safer)
+    # loop_pairs = re.findall(r"for .* in range", code)
+    # if len(loop_pairs) >= 2 and "dp" in code:
+    #     return True, "Nested loops + dp[] suggests DP"
+
+    # return False, "No dp or memoization found"
 
 def _detect_graph(code: str) -> Tuple[bool, str]:
     """
@@ -65,6 +75,32 @@ def _detect_graph(code: str) -> Tuple[bool, str]:
     if re.search(r"\[\s*\]\s*for\s+_?\s+in\s+range", code):
         return True, "Adjacency-list pattern detected"
     return False, "No graph patterns"
+
+def _detect_graph_traversal(code: str) -> Tuple[str, str]:
+    """
+    Detect graph traversal type.
+    Returns:
+      ("graph_dfs" | "graph_bfs" | "graph", reason)
+    """
+
+    lowered = code.lower()
+
+    # Explicit DFS
+    if "dfs(" in lowered or "def dfs" in lowered:
+        return "graph_dfs", "DFS traversal detected (dfs keyword)"
+
+    # Explicit BFS
+    if "bfs(" in lowered or "deque" in lowered or "queue" in lowered:
+        return "graph_bfs", "BFS traversal detected (queue/deque)"
+
+    # Recursive graph traversal → DFS
+    if "def" in lowered and "graph" in lowered and "visited" in lowered:
+        if "dfs" in lowered or "recursive" in lowered:
+            return "graph_dfs", "Recursive graph traversal suggests DFS"
+
+    # Safe default
+    return "graph_bfs", "Graph detected; defaulting to BFS"
+
 
 
 def _detect_array_string(code: str) -> Tuple[bool, str]:
@@ -135,18 +171,23 @@ def classify_code(code: str, use_ml_fallback: bool = False) -> Dict:
 
     rec, reason = _detect_recursion(code)
     if rec:
-        reasons.append(reason)
         score["recursion"] = 1.0
-
-    dp, reason = _detect_dp(code)
-    if dp:
         reasons.append(reason)
-        score["dp"] = max(score.get("dp", 0.0), 0.9)
+
+    dp_type, reason = _detect_dp(code)
+    if dp_type:
+        reasons.append(reason)
+        score[dp_type] = 1.2 # if dp_type == "dp_bottomup" else 0.95
+
 
     graph, reason = _detect_graph(code)
     if graph:
+        traversal, traversal_reason = _detect_graph_traversal(code)
+
         reasons.append(reason)
-        score["graph"] = max(score.get("graph", 0.0), 0.9)
+        reasons.append(traversal_reason)
+
+        score[traversal] = max(score.get(traversal, 0.0), 0.95)
 
     arrstr, reason = _detect_array_string(code)
     if arrstr:
@@ -159,8 +200,19 @@ def classify_code(code: str, use_ml_fallback: bool = False) -> Dict:
         score["pointer"] = max(score.get("pointer", 0.0), 0.85)
 
     # DP overrides recursion if both detected
-    if "dp" in score and "recursion" in score:
-        score["dp"] = 1.1   # force DP to win
+    # DP overrides recursion if both detected
+    if "dp_topdown" in score and "recursion" in score:
+        score.pop("recursion", None)
+
+    if "dp_bottomup" in score and "recursion" in score:
+        score.pop("recursion", None)
+
+    # GRAPH DFS overrides recursion
+    # GRAPH overrides recursion completely
+    if "graph_dfs" in score or "graph_bfs" in score:
+        score.pop("recursion", None)
+
+
 
     # If multiple scores, pick best
     if score:

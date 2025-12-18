@@ -18,6 +18,9 @@ from engines.array_engine import analyze_array_code
 from engines.string_engine import analyze_string_code
 from engines.dp_runtime_tracer import trace_dp_runtime
 from engines.graph_runtime_tracer import trace_graph_runtime
+from engines.graph_dfs_runtime_tracer import trace_dfs_runtime
+from engines.dp_bottomup_runtime_tracer import trace_dp_bottomup_runtime
+
 # Sandbox
 from sandbox.sandbox_runner import run_in_sandbox
 
@@ -130,12 +133,22 @@ async def process_stream(req: StreamRequest, request: Request):
                 yield sse_event({"stage": "runtime", "payload": runtime})
                 yield sse_event({"stage": "analysis", "payload": analysis})
             # ---------- GRAPH ANALYSIS (optional) ----------
-            elif topic == "graph":
-                yield sse_event({"stage": "graph_start", "payload": {}})
+            elif topic == "graph_bfs":
+                yield sse_event({"stage": "graph_start", "payload": {"algo": "bfs"}})
 
-                graph_events = trace_graph_runtime(code)
+                bfs_events = trace_graph_runtime(code)
 
-                for step in graph_events:
+                for step in bfs_events:
+                    yield sse_event({
+                        "stage": "graph_step",
+                        "payload": step
+                    })
+            elif topic == "graph_dfs":
+                yield sse_event({"stage": "graph_start", "payload": {"algo": "dfs"}})
+
+                dfs_events = trace_dfs_runtime(code)
+
+                for step in dfs_events:
                     yield sse_event({
                         "stage": "graph_step",
                         "payload": step
@@ -185,10 +198,9 @@ async def process_stream(req: StreamRequest, request: Request):
                 "final_table": None
             }
 
-            if topic == "dp":
-                yield sse_event({"stage": "dp_start", "payload": {}})
+            if topic in ("dp", "dp_topdown"):
+                yield sse_event({"stage": "dp_start", "payload": {"mode": "top_down"}})
 
-                # 1️⃣ Detect entry function
                 entry_func = None
                 for line in code.splitlines():
                     if line.strip().startswith("def "):
@@ -222,6 +234,16 @@ async def process_stream(req: StreamRequest, request: Request):
                         "stage": "dp_step",
                         "payload": step
                     })
+            elif topic == "dp_bottomup":
+                yield sse_event({"stage": "dp_start", "payload": {"mode": "bottom_up"}})
+
+                dp_events = trace_dp_bottomup_runtime(code)
+
+                for step in dp_events:
+                    dp_out["steps"].append(step)
+                    dp_out["final_table"] = step.get("table")
+
+                    yield sse_event({"stage": "dp_step", "payload": step})
             else:
                 yield sse_event({"stage": "dp_skipped", "payload": {"reason": "topic not dp"}})
 
@@ -248,22 +270,26 @@ async def process_stream(req: StreamRequest, request: Request):
             #     return
 
             # ---------- STAGE 7: teacher explanation (LLM) ----------
-            yield sse_event({"stage": "explain_start", "payload": {}})
-            try:
-                explain_prompt = make_explain_prompt(code, {
-                    "topic": topic,
-                    "classification": classification,
-                    "runtime": runtime,
-                    "analysis": analysis,
-                    "recursion_tree": recursion_tree,
-                    "dp": dp_out,
-                    "issues": issues,
-                    # "fix": fix_text if 'fix_text' in locals() else None
-                })
-                explanation = call_llm(explain_prompt)
-                yield sse_event({"stage": "explanation", "payload": explanation})
-            except Exception as e:
-                yield sse_event({"stage": "explain_error", "payload": {"error": str(e)}})
+            # ---------- STAGE 7: teacher explanation (LLM) ----------
+            explanation = None
+
+            if topic != "graph_dfs":   # 👈 DFS ONLY SKIP
+                yield sse_event({"stage": "explain_start", "payload": {}})
+                try:
+                    explain_prompt = make_explain_prompt(code, {
+                        "topic": topic,
+                        "classification": classification,
+                        "runtime": runtime,
+                        "analysis": analysis,
+                        "recursion_tree": recursion_tree,
+                        "dp": dp_out,
+                        "issues": issues,
+                    })
+                    explanation = call_llm(explain_prompt)
+                    yield sse_event({"stage": "explanation", "payload": explanation})
+                except Exception as e:
+                    yield sse_event({"stage": "explain_error", "payload": {"error": str(e)}})
+
 
             # ---------- FINAL: done ----------
             final = {
@@ -274,9 +300,11 @@ async def process_stream(req: StreamRequest, request: Request):
                 "recursion_tree": recursion_tree,
                 "dp": dp_out,
                 "issues": issues,
-                # "fix": fix_text if 'fix_text' in locals() else None,
-                "explanation": explanation if 'explanation' in locals() else None
             }
+
+            if topic != "graph_dfs" and explanation:
+                final["explanation"] = explanation
+
             yield sse_event({"stage": "done", "payload": final})
 
         except asyncio.CancelledError:
