@@ -27,10 +27,21 @@ def diff_locals(prev, curr):
 
 def trace_execution(code: str):
     events = []
-    last_locals = {}
+    
+    frame_history = {}
 
     def tracer(frame, event, arg):
-        nonlocal last_locals
+        frame_id = id(frame)
+
+        if event == 'return':
+            if frame_id in frame_history:
+                del frame_history[frame_id]
+            return tracer
+
+        if event != 'line':
+            return tracer
+
+        last_locals = frame_history.get(frame_id, {})
 
         if event == "line":
             raw_locals = {
@@ -47,7 +58,7 @@ def trace_execution(code: str):
                 "locals_all": raw_locals
             })
 
-            last_locals = raw_locals
+            frame_history[frame_id] = raw_locals
 
         return tracer
 
